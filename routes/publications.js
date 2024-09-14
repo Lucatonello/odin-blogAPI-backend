@@ -1,7 +1,7 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
 const pool = require('../db/pool');
-const verifyToken = require('./users');
+const { verifyToken } = require('./users');
 
 router.get('/', (req, res) => {
     res.json({ message: 'welcome' });
@@ -17,11 +17,11 @@ router.get('/posts', async (req, res) => {
     }
 });
 
-router.post('/posts', async (req, res) => {
+router.post('/posts', verifyToken, async (req, res) => {
     try {
         const { text, title } = req.body;
         const authorid = req.body.authorid;
-        const date = getDate();
+        const date = new Date();
         await pool.query('INSERT INTO posts (text, authorid, addedat, title) VALUES ($1, $2, $3, $4)', [text, authorid, date, title]);
     
         res.json({ message: 'post created' })
@@ -36,7 +36,7 @@ router.put('/posts/:id', verifyToken, async (req, res) => {
     try {
         const text = req.body.text;
         const postid = req.params.id;
-        const date = getDate();
+        const date = new Date();
 
         await pool.query('UPDATE posts SET text = $1, addedat = $2 WHERE id = $3', [text, date, postid]);
     
@@ -75,12 +75,12 @@ router.get('/posts/:id/comments', async (req, res) => {
 
 });
 
-router.post('posts/:id/comments', async (req, res) => {
+router.post('/posts/:id/comments', verifyToken, async (req, res) => {
     try {
         const text = req.body.text;
         const postid = req.params.id;
         const authorid = req.body.authorid;
-        const date = getDate();
+        const date = new Date();
 
         await pool.query('INSERT INTO comments (text, postid, authorid, addedat) VALUES ($1, $2, $3, $4)', [text, postid, authorid, date]);
         res.json({ message: 'comment posted'})
@@ -94,9 +94,9 @@ router.put('/posts/:id/comments/:commentid', verifyToken, async (req, res) => {
     try {
         const text = req.body.text;
         const commentid = req.params.commentid;
-        const date = getDate();
+        const date = new Date();
 
-        await pool.query('UPDATE comments SET text = $1, addedat = $2 WHERE commentid = $3', [text, date, commentid]);
+        await pool.query('UPDATE comments SET text = $1, addedat = $2 WHERE id = $3', [text, date, commentid]);
         res.json({ message: 'comment updated'});
     } catch (err) {
         console.error(err);
@@ -104,14 +104,14 @@ router.put('/posts/:id/comments/:commentid', verifyToken, async (req, res) => {
     }
 });
 
-router.delete('posts/:id/comments/:commentid', verifyToken, async (req, res) => {
+router.delete('/posts/:id/comments/:commentid', verifyToken, async (req, res) => {
     try {
         const commentid = req.params.commentid;
 
         await pool.query('DELETE FROM comments WHERE id = $1', [commentid]);
         res.json({ message: 'comment deleted' });
     } catch (err) {
-        console.err(err);
+        console.error(err);
         res.status(500).send('Error deleting comment');
     }
 });

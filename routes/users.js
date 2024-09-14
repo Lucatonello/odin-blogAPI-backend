@@ -1,4 +1,4 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
 const pool = require('../db/pool');
 const jwt = require('jsonwebtoken');
@@ -17,14 +17,14 @@ router.post('/login', async (req, res) => {
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(500).send('Invalid credentials');
+            return res.status(401).send('Invalid credentials');
         }
 
 
-        jwt.sign({ id: user.id, username: user.username }, 'secretkey', (err, token) => {
+        jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, (err, token) => {
             if (err) {
                 console.log(err);
-                res.status(500).send('error with JWT');
+                return res.status(500).send('error with JWT');
             }
             res.json({
                 token: token
@@ -32,8 +32,8 @@ router.post('/login', async (req, res) => {
         });
 
     } catch (err) {
-        console.errror(err); 
-        res.status(500).send('Error loging in');
+        console.error(err); 
+        return res.status(500).send('Error loging in');
     }
 });
 
@@ -46,7 +46,7 @@ function verifyToken(req, res, next) {
         req.token = bearerToken;
         next();
     } else {
-        res.status(403).send('Forbidden');
+        return res.status(403).send('Forbidden');
     }
 }
 
@@ -64,7 +64,7 @@ router.post('/signup', async (req, res) => {
 
     } catch (err) {
         console.log(err);
-        res.status(500).send('error creating user');
+        return res.status(500).send('error creating user');
     }
 });
 
