@@ -20,14 +20,14 @@ router.post('/login', async (req, res) => {
             return res.status(401).send('Invalid credentials');
         }
 
-
         jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, (err, token) => {
             if (err) {
                 console.log(err);
                 return res.status(500).send('error with JWT');
             }
             res.json({
-                token: token
+                token: token,
+                authorid: user.id
             });
         });
 
@@ -52,6 +52,9 @@ function verifyToken(req, res, next) {
 
 router.post('/signup', async (req, res) => {
     const { username, password } = req.body;
+    if (!password) {
+        console.log('Password is indeed undefined. Username: ', username);
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
     try {
         const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);

@@ -9,11 +9,32 @@ router.get('/', (req, res) => {
 
 router.get('/posts', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM posts');
+        const result = await pool.query(`
+            SELECT posts.id, posts.text, posts.title, posts.addedat, posts.public, users.username AS author
+            FROM posts
+            JOIN users ON posts.authorid = users.id
+            ORDER BY id
+        `)
         res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading posts')
+    }
+});
+
+router.get('/posts/:id', async (req, res) => {
+    const id = req.params.id;
+    try {
+        const result = await pool.query(`
+            SELECT posts.id, posts.text, posts.title, posts.addedat, posts.public, users.username AS author
+            FROM posts
+            JOIN users ON posts.authorid = users.id
+            WHERE posts.id = $1
+        `, [id]);
+        res.json(result.rows)
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading post')
     }
 });
 
@@ -59,6 +80,27 @@ router.delete('/posts/:id', verifyToken, async (req, res) => {
     }
 });
 
+//change status of post
+
+router.put('/posts/changeStatus/:id', async(req, res) => {
+    const id = req.params.id;
+    try {
+        const isPublic = await pool.query('SELECT public FROM posts WHERE id = $1', [id]);
+
+        if (isPublic.rows.length === 0) {
+            return res.status(404).send('Post not found');
+          }
+
+        const newStatus = !isPublic.rows[0].public;
+        await pool.query('UPDATE posts SET public = $1 WHERE id = $2', [newStatus, id]);
+        res.status(200).send('Post status updated');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error changing status of the post');
+    }
+});
+
+
 ///R - GET posts/:id/comments
 ///C - POST posts/:id/comments
 ///U - PUT posts/:id/comments/:commentid
@@ -66,7 +108,14 @@ router.delete('/posts/:id', verifyToken, async (req, res) => {
 
 router.get('/posts/:id/comments', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM comments');
+        const { id } = req.params;
+        const result = await pool.query(`
+            SELECT comments.id, comments.postid, comments.text, comments.addedat, users.username AS author
+            FROM comments
+            JOIN users ON comments.authorid = users.id
+            WHERE comments.postid = $1
+            ORDER BY id
+        `, [id]);
         res.json(result.rows);
     } catch (err) {
         console.error(err);
