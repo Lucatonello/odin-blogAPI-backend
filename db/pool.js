@@ -1,7 +1,6 @@
 const { Pool } = require("pg");
 
-console.log('database url: ', process.env.DATABASE_URL);
 module.exports = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: 'postgres://koyeb-adm:lyJoY6wTX8FP@ep-silent-fire-a45vprnf.us-east-1.pg.koyeb.app/koyebdb',
   ssl: { rejectUnauthorized: false }
 });
