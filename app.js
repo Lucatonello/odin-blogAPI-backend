@@ -2,7 +2,6 @@ const path = require("path");
 const express = require("express");
 const app = express();
 const { Pool } = require('pg');
-require("dotenv").config();
 const PORT = process.env.PORT || 3000;
 const publications = require('./routes/publications');
 const users = require('./routes/users');
@@ -15,7 +14,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*'); // Allow all origins or specify the React app origin
+    res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     next();
 });
